@@ -1,13 +1,16 @@
 package br.com.fiap.mercadoexpress.entity;
 
+import br.com.fiap.mercadoexpress.dto.request.ProductRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Entity
+@Getter
 @Table(name = "products")
 @Builder
 @AllArgsConstructor
@@ -26,9 +29,9 @@ public class Product {
     @Column(nullable = false, name = "stock_quantity")
     private Integer stockQuantity;
 
-    public void updateDetails(Product updatedProduct) {
-        this.name = updatedProduct.name;
-        this.price = updatedProduct.price;
-        this.stockQuantity = updatedProduct.stockQuantity;
+    public void updateDetails(String name, BigDecimal price, Integer stockQuantity) {
+        this.name = name;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
     }
 }
