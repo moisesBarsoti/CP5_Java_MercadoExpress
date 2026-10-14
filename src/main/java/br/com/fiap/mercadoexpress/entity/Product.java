@@ -25,4 +25,10 @@ public class Product {
 
     @Column(nullable = false, name = "stock_quantity")
     private Integer stockQuantity;
+
+    public void updateDetails(Product updatedProduct) {
+        this.name = updatedProduct.name;
+        this.price = updatedProduct.price;
+        this.stockQuantity = updatedProduct.stockQuantity;
+    }
 }
