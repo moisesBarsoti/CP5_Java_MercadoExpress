@@ -5,6 +5,7 @@ import br.com.fiap.mercadoexpress.dto.request.ProductRequest;
 import br.com.fiap.mercadoexpress.dto.response.ProductResponse;
 import br.com.fiap.mercadoexpress.entity.Product;
 import br.com.fiap.mercadoexpress.service.ProductService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/products")
