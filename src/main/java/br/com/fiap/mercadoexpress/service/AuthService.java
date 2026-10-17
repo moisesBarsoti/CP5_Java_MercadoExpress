@@ -1,12 +1,14 @@
 
 package br.com.fiap.mercadoexpress.service;
 
+import br.com.fiap.mercadoexpress.dto.request.LoginRequest;
 import br.com.fiap.mercadoexpress.dto.request.UserRequest;
 import br.com.fiap.mercadoexpress.dto.response.UserResponse;
 import br.com.fiap.mercadoexpress.entity.User;
 import br.com.fiap.mercadoexpress.enums.Role;
 import br.com.fiap.mercadoexpress.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -42,4 +44,22 @@ public class AuthService {
                 savedUser.getRole()
         );
     }
+
+
+    public User authenticateUser(LoginRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+
+        boolean validPassword = passwordEncoder.matches(
+                request.password(),
+                user.getPasswordHash()
+        );
+
+        if (!validPassword) {
+            throw new BadCredentialsException("Invalid email or password");
+        }
+
+        return user;
+    }
+
 }
