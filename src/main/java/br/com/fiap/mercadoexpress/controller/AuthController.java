@@ -1,7 +1,9 @@
 
 package br.com.fiap.mercadoexpress.controller;
 
+import br.com.fiap.mercadoexpress.dto.request.LoginRequest;
 import br.com.fiap.mercadoexpress.dto.request.UserRequest;
+import br.com.fiap.mercadoexpress.dto.response.LoginResponse;
 import br.com.fiap.mercadoexpress.dto.response.UserResponse;
 import br.com.fiap.mercadoexpress.service.AuthService;
 import jakarta.validation.Valid;
@@ -20,5 +22,10 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse registerUser(@Valid @RequestBody UserRequest request) {
         return authService.registerUser(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse loginUser(@Valid @RequestBody LoginRequest request) {
+        return authService.loginUser(request);
     }
 }
