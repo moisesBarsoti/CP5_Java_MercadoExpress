@@ -3,6 +3,7 @@ package br.com.fiap.mercadoexpress.service;
 
 import br.com.fiap.mercadoexpress.dto.request.LoginRequest;
 import br.com.fiap.mercadoexpress.dto.request.UserRequest;
+import br.com.fiap.mercadoexpress.dto.response.LoginResponse;
 import br.com.fiap.mercadoexpress.dto.response.UserResponse;
 import br.com.fiap.mercadoexpress.entity.User;
 import br.com.fiap.mercadoexpress.enums.Role;
@@ -18,6 +19,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public UserResponse registerUser(UserRequest request) {
         boolean existsEmail = userRepository.existsByEmail(request.email());
@@ -45,10 +47,11 @@ public class AuthService {
         );
     }
 
-
     public User authenticateUser(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+                .orElseThrow(() ->
+                        new BadCredentialsException("Invalid email or password")
+                );
 
         boolean validPassword = passwordEncoder.matches(
                 request.password(),
@@ -62,4 +65,15 @@ public class AuthService {
         return user;
     }
 
+    public LoginResponse loginUser(LoginRequest request) {
+        User user = authenticateUser(request);
+
+        String token = jwtService.generateToken(user);
+
+        return new LoginResponse(
+                token,
+                "Bearer",
+                jwtService.getExpirationSeconds()
+        );
+    }
 }
