@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login - MercadoExpress</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/auth.js" defer></script>
+</head>
+<body>
+
+<header>
+    <h1>MercadoExpress</h1>
+
+    <nav>
+        <a href="/index.html">Início</a>
+        <a href="/products.html">Produtos</a>
+        <a href="/login.html">Entrar</a>
+        <a href="/register.html">Cadastrar</a>
+    </nav>
+</header>
+
+<main class="auth-container">
+    <h2>Entrar na minha conta</h2>
+
+    <form id="login-form">
+        <label for="email">E-mail</label>
+        <input
+                type="email"
+                id="email"
+                name="email"
+                required
+        >
+
+        <label for="password">Senha</label>
+        <input
+                type="password"
+                id="password"
+                name="password"
+                required
+        >
+
+        <button type="submit" class="button">
+            Entrar
+        </button>
+
+        <p id="login-message" role="status" aria-live="polite"></p>
+    </form>
+
+    <p>
+        Não possui uma conta?
+        <a href="/register.html">Cadastre-se</a>
+    </p>
+</main>
+
+</body>
+</html>
