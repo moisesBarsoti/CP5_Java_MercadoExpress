@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Cadastro - MercadoExpress</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/register.js" defer></script>
+</head>
+<body>
+
+<header>
+    <h1>MercadoExpress</h1>
+
+    <nav>
+        <a href="/index.html">Início</a>
+        <a href="/products.html">Produtos</a>
+        <a href="/login.html">Entrar</a>
+        <a href="/register.html">Cadastrar</a>
+    </nav>
+</header>
+
+<main class="auth-container">
+    <h2>Criar minha conta</h2>
+
+    <form id="register-form">
+        <label for="name">Nome completo</label>
+        <input type="text" id="name" name="name"
+               autocomplete="name" required>
+
+        <label for="email">E-mail</label>
+        <input type="email" id="email" name="email"
+               autocomplete="email" required>
+
+        <label for="password">Senha</label>
+        <input type="password" id="password" name="password"
+               minlength="8" autocomplete="new-password" required>
+
+        <button type="submit" class="button">
+            Criar conta
+        </button>
+
+        <p id="register-message" role="status" aria-live="polite"></p>
+    </form>
+
+    <p>
+        Já possui uma conta?
+        <a href="/login.html">Faça login</a>
+    </p>
+</main>
+
+</body>
+</html>
