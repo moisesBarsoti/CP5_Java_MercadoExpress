@@ -79,6 +79,12 @@ public class SecurityConfig {
                                 "/favicon.ico"
                         ).permitAll()
 
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/admin/dashboard",
+                                "/api/admin/dashboard/**"
+                        ).hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .httpBasic(AbstractHttpConfigurer::disable)
