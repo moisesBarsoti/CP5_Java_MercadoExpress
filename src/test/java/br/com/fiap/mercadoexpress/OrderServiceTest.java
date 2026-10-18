@@ -13,11 +13,17 @@ import br.com.fiap.mercadoexpress.repository.OrderRepository;
 import br.com.fiap.mercadoexpress.repository.ProductRepository;
 import br.com.fiap.mercadoexpress.repository.UserRepository;
 import br.com.fiap.mercadoexpress.service.OrderService;
+import br.com.fiap.mercadoexpress.entity.OutboxEvent;
+import br.com.fiap.mercadoexpress.enums.OutboxStatus;
+import br.com.fiap.mercadoexpress.repository.OutboxEventRepository;
+
+import org.mockito.ArgumentCaptor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -48,6 +54,9 @@ class OrderServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private OutboxEventRepository outboxEventRepository;
+
     private OrderService orderService;
 
     private static final String CUSTOMER_EMAIL = "customer@test.com";
@@ -58,7 +67,8 @@ class OrderServiceTest {
                 orderRepository,
                 productRepository,
                 userRepository,
-                eventPublisher
+                eventPublisher,
+                outboxEventRepository
         );
     }
 
@@ -305,4 +315,60 @@ class OrderServiceTest {
                     return order;
                 });
     }
+
+
+    @Test
+    void shouldSaveOutboxEventWhenOrderIsCreated() {
+
+        mockCustomer();
+        mockSavedOrder();
+
+        Product product = createProduct(12);
+
+        when(productRepository.findByIdForUpdate(2L))
+                .thenReturn(Optional.of(product));
+
+        OrderRequest request = new OrderRequest(
+                List.of(new OrderItemRequest(2L, 1))
+        );
+
+        orderService.createOrder(
+                request,
+                CUSTOMER_EMAIL
+        );
+
+        ArgumentCaptor<OutboxEvent> captor =
+                ArgumentCaptor.forClass(OutboxEvent.class);
+
+        verify(outboxEventRepository).save(captor.capture());
+
+        OutboxEvent savedEvent = captor.getValue();
+
+        assertEquals(5L, savedEvent.getOrderId());
+        assertEquals("5", savedEvent.getPayload());
+
+        assertEquals(
+                OutboxStatus.PENDING,
+                savedEvent.getStatus()
+        );
+
+        assertEquals(0, savedEvent.getAttempts());
+        assertNull(savedEvent.getPublishedAt());
+
+        InOrder executionOrder = inOrder(
+                orderRepository,
+                outboxEventRepository,
+                eventPublisher
+        );
+
+        executionOrder.verify(orderRepository)
+                .saveAndFlush(any(Order.class));
+
+        executionOrder.verify(outboxEventRepository)
+                .save(any(OutboxEvent.class));
+
+        executionOrder.verify(eventPublisher)
+                .publishEvent(any(OrderCreatedEvent.class));
+    }
+
 }
