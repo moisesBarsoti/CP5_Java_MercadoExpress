@@ -46,4 +46,14 @@ public class Product {
 
         this.stockQuantity -= quantity;
     }
+
+    public void restoreStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException(
+                    "Quantity must be greater than zero"
+            );
+        }
+
+        this.stockQuantity = Math.addExact(this.stockQuantity, quantity);
+    }
 }
