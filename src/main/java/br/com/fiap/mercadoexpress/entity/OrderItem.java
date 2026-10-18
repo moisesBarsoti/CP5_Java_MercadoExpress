@@ -32,6 +32,9 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Column(name = "unit_cost", precision = 10, scale = 2)
+    private BigDecimal unitCost;
+
     @Column(
             name = "unit_price",
             nullable = false,
@@ -42,5 +45,15 @@ public class OrderItem {
 
     public BigDecimal getSubtotal() {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    public BigDecimal getGrossProfit() {
+        if (unitCost == null) {
+            return null;
+        }
+
+        return unitPrice
+                .subtract(unitCost)
+                .multiply(BigDecimal.valueOf(quantity));
     }
 }
