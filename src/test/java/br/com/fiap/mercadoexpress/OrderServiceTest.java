@@ -5,29 +5,24 @@ import br.com.fiap.mercadoexpress.dto.request.OrderItemRequest;
 import br.com.fiap.mercadoexpress.dto.request.OrderRequest;
 import br.com.fiap.mercadoexpress.dto.response.OrderResponse;
 import br.com.fiap.mercadoexpress.entity.Order;
+import br.com.fiap.mercadoexpress.entity.OutboxEvent;
 import br.com.fiap.mercadoexpress.entity.Product;
 import br.com.fiap.mercadoexpress.entity.User;
 import br.com.fiap.mercadoexpress.enums.OrderStatus;
-import br.com.fiap.mercadoexpress.event.OrderCreatedEvent;
+import br.com.fiap.mercadoexpress.enums.OutboxStatus;
 import br.com.fiap.mercadoexpress.repository.OrderRepository;
+import br.com.fiap.mercadoexpress.repository.OutboxEventRepository;
 import br.com.fiap.mercadoexpress.repository.ProductRepository;
 import br.com.fiap.mercadoexpress.repository.UserRepository;
 import br.com.fiap.mercadoexpress.service.OrderService;
-import br.com.fiap.mercadoexpress.entity.OutboxEvent;
-import br.com.fiap.mercadoexpress.enums.OutboxStatus;
-import br.com.fiap.mercadoexpress.repository.OutboxEventRepository;
-
-import org.mockito.ArgumentCaptor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -52,14 +47,12 @@ class OrderServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private ApplicationEventPublisher eventPublisher;
-
-    @Mock
     private OutboxEventRepository outboxEventRepository;
 
     private OrderService orderService;
 
-    private static final String CUSTOMER_EMAIL = "customer@test.com";
+    private static final String CUSTOMER_EMAIL =
+            "customer@test.com";
 
     @BeforeEach
     void setUp() {
@@ -67,14 +60,12 @@ class OrderServiceTest {
                 orderRepository,
                 productRepository,
                 userRepository,
-                eventPublisher,
                 outboxEventRepository
         );
     }
 
     @Test
     void shouldCreateOrderSuccessfully() {
-
         mockCustomer();
         mockSavedOrder();
 
@@ -93,9 +84,7 @@ class OrderServiceTest {
         );
 
         assertNotNull(response);
-
         assertEquals(5L, response.id());
-
         assertEquals(
                 OrderStatus.PENDING_PAYMENT,
                 response.status()
@@ -108,24 +97,18 @@ class OrderServiceTest {
         );
 
         assertEquals(1, response.items().size());
-
-        assertEquals(
-                1,
-                response.items().get(0).quantity()
-        );
-
+        assertEquals(1, response.items().get(0).quantity());
         assertEquals(11, product.getStockQuantity());
 
         verify(orderRepository)
                 .saveAndFlush(any(Order.class));
 
-        verify(eventPublisher)
-                .publishEvent(any(OrderCreatedEvent.class));
+        verify(outboxEventRepository)
+                .save(any(OutboxEvent.class));
     }
 
     @Test
     void shouldRejectOrderWhenStockIsInsufficient() {
-
         mockCustomer();
 
         Product product = createProduct(1);
@@ -150,12 +133,11 @@ class OrderServiceTest {
         verify(orderRepository, never())
                 .saveAndFlush(any(Order.class));
 
-        verifyNoInteractions(eventPublisher);
+        verifyNoInteractions(outboxEventRepository);
     }
 
     @Test
     void shouldRejectOrderWithInvalidQuantity() {
-
         mockCustomer();
 
         OrderRequest request = new OrderRequest(
@@ -178,13 +160,12 @@ class OrderServiceTest {
         verifyNoInteractions(
                 productRepository,
                 orderRepository,
-                eventPublisher
+                outboxEventRepository
         );
     }
 
     @Test
     void shouldMergeDuplicateProductsIntoOneOrderItem() {
-
         mockCustomer();
         mockSavedOrder();
 
@@ -206,12 +187,7 @@ class OrderServiceTest {
         );
 
         assertEquals(1, response.items().size());
-
-        assertEquals(
-                3,
-                response.items().get(0).quantity()
-        );
-
+        assertEquals(3, response.items().get(0).quantity());
         assertEquals(9, product.getStockQuantity());
 
         assertEquals(
@@ -226,13 +202,12 @@ class OrderServiceTest {
         verify(orderRepository, times(1))
                 .saveAndFlush(any(Order.class));
 
-        verify(eventPublisher)
-                .publishEvent(any(OrderCreatedEvent.class));
+        verify(outboxEventRepository, times(1))
+                .save(any(OutboxEvent.class));
     }
 
     @Test
     void shouldRejectOrderWhenProductDoesNotExist() {
-
         mockCustomer();
 
         when(productRepository.findByIdForUpdate(99L))
@@ -258,11 +233,58 @@ class OrderServiceTest {
         verify(orderRepository, never())
                 .saveAndFlush(any(Order.class));
 
-        verifyNoInteractions(eventPublisher);
+        verifyNoInteractions(outboxEventRepository);
+    }
+
+    @Test
+    void shouldSaveOutboxEventWhenOrderIsCreated() {
+        mockCustomer();
+        mockSavedOrder();
+
+        Product product = createProduct(12);
+
+        when(productRepository.findByIdForUpdate(2L))
+                .thenReturn(Optional.of(product));
+
+        OrderRequest request = new OrderRequest(
+                List.of(new OrderItemRequest(2L, 1))
+        );
+
+        orderService.createOrder(
+                request,
+                CUSTOMER_EMAIL
+        );
+
+        ArgumentCaptor<OutboxEvent> captor =
+                ArgumentCaptor.forClass(OutboxEvent.class);
+
+        verify(outboxEventRepository)
+                .save(captor.capture());
+
+        OutboxEvent savedEvent = captor.getValue();
+
+        assertEquals(5L, savedEvent.getOrderId());
+        assertEquals("5", savedEvent.getPayload());
+        assertEquals(
+                OutboxStatus.PENDING,
+                savedEvent.getStatus()
+        );
+        assertEquals(0, savedEvent.getAttempts());
+        assertNull(savedEvent.getPublishedAt());
+
+        InOrder executionOrder = inOrder(
+                orderRepository,
+                outboxEventRepository
+        );
+
+        executionOrder.verify(orderRepository)
+                .saveAndFlush(any(Order.class));
+
+        executionOrder.verify(outboxEventRepository)
+                .save(any(OutboxEvent.class));
     }
 
     private void mockCustomer() {
-
         User customer = mock(User.class);
 
         when(userRepository.findByEmail(CUSTOMER_EMAIL))
@@ -270,7 +292,6 @@ class OrderServiceTest {
     }
 
     private Product createProduct(int stockQuantity) {
-
         Product product = Product.builder()
                 .name("Notebook Dell Inspiron")
                 .price(new BigDecimal("3200.00"))
@@ -288,10 +309,8 @@ class OrderServiceTest {
     }
 
     private void mockSavedOrder() {
-
         when(orderRepository.saveAndFlush(any(Order.class)))
                 .thenAnswer(invocation -> {
-
                     Order order = invocation.getArgument(0);
 
                     ReflectionTestUtils.setField(
@@ -315,60 +334,4 @@ class OrderServiceTest {
                     return order;
                 });
     }
-
-
-    @Test
-    void shouldSaveOutboxEventWhenOrderIsCreated() {
-
-        mockCustomer();
-        mockSavedOrder();
-
-        Product product = createProduct(12);
-
-        when(productRepository.findByIdForUpdate(2L))
-                .thenReturn(Optional.of(product));
-
-        OrderRequest request = new OrderRequest(
-                List.of(new OrderItemRequest(2L, 1))
-        );
-
-        orderService.createOrder(
-                request,
-                CUSTOMER_EMAIL
-        );
-
-        ArgumentCaptor<OutboxEvent> captor =
-                ArgumentCaptor.forClass(OutboxEvent.class);
-
-        verify(outboxEventRepository).save(captor.capture());
-
-        OutboxEvent savedEvent = captor.getValue();
-
-        assertEquals(5L, savedEvent.getOrderId());
-        assertEquals("5", savedEvent.getPayload());
-
-        assertEquals(
-                OutboxStatus.PENDING,
-                savedEvent.getStatus()
-        );
-
-        assertEquals(0, savedEvent.getAttempts());
-        assertNull(savedEvent.getPublishedAt());
-
-        InOrder executionOrder = inOrder(
-                orderRepository,
-                outboxEventRepository,
-                eventPublisher
-        );
-
-        executionOrder.verify(orderRepository)
-                .saveAndFlush(any(Order.class));
-
-        executionOrder.verify(outboxEventRepository)
-                .save(any(OutboxEvent.class));
-
-        executionOrder.verify(eventPublisher)
-                .publishEvent(any(OrderCreatedEvent.class));
-    }
-
 }
