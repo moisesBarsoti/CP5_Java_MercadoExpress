@@ -1,4 +1,8 @@
+
 package br.com.fiap.mercadoexpress.dto.response;
 
-public class ProductStockResponse {
-}
+public record ProductStockResponse(
+        Long productId,
+        String productName,
+        Integer availableQuantity
+) {}
