@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import br.com.fiap.mercadoexpress.event.OrderPaidEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -22,6 +24,7 @@ public class PaymentResultService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void approvePayment(Long orderId) {
@@ -38,6 +41,10 @@ public class PaymentResultService {
         }
 
         order.markAsPaid();
+
+        eventPublisher.publishEvent(
+                new OrderPaidEvent(orderId)
+        );
 
         log.info("Order {} payment approved", orderId);
     }
