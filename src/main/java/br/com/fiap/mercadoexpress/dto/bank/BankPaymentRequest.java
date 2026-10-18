@@ -1,4 +1,4 @@
-package br.com.fiap.mercadoexpress.dto.request;
+package br.com.fiap.mercadoexpress.dto.bank;
 
 import java.math.BigDecimal;
 
