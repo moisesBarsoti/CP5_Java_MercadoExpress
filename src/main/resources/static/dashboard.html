@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard | MercadoExpress</title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+    <script
+            src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"
+            defer>
+    </script>
+    <script src="/js/dashboard.js" defer></script>
+</head>
+<body>
+
+<header class="header">
+    <div class="brand">Mercado<span>Express</span></div>
+
+    <nav>
+        <a href="/index.html">Início</a>
+        <a href="/products.html">Produtos</a>
+        <button id="logoutButton">Sair</button>
+        <a href="/dashboard.html" id="dashboardLink" hidden>
+            Dashboard
+        </a>
+    </nav>
+</header>
+
+<main class="dashboard">
+
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">ÁREA ADMINISTRATIVA</p>
+            <h1>Dashboard Gerencial</h1>
+            <p>Acompanhe vendas, pedidos e estoque.</p>
+        </div>
+    </div>
+
+    <p id="errorMessage" class="error" hidden></p>
+
+    <section id="dashboardContent" hidden>
+
+        <div class="metrics">
+            <article class="metric-card">
+                <h2>Faturamento</h2>
+                <strong id="totalRevenue">--</strong>
+                <span>Pedidos pagos</span>
+            </article>
+
+            <article class="metric-card">
+                <h2>Total de pedidos</h2>
+                <strong id="totalOrders">--</strong>
+                <span>Todas as compras</span>
+            </article>
+
+            <article class="metric-card">
+                <h2>Pedidos pagos</h2>
+                <strong id="paidOrders">--</strong>
+                <span>Pagamentos confirmados</span>
+            </article>
+
+            <article class="metric-card">
+                <h2>Estoque disponível</h2>
+                <strong id="availableStock">--</strong>
+                <span>Unidades disponíveis</span>
+            </article>
+        </div>
+
+        <div class="charts">
+            <article class="chart-card">
+                <h2>Vendas por dia</h2>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </article>
+
+            <article class="chart-card">
+                <h2>Situação dos pedidos</h2>
+                <div class="chart-container">
+                    <canvas id="ordersChart"></canvas>
+                </div>
+            </article>
+
+            <article class="chart-card full-width">
+                <h2>Estoque por produto</h2>
+                <div class="chart-container">
+                    <canvas id="stockChart"></canvas>
+                </div>
+            </article>
+        </div>
+
+    </section>
+
+</main>
+</body>
+</html>
