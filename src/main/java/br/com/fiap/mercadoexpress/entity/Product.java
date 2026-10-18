@@ -29,6 +29,9 @@ public class Product {
     @Column(nullable = false, name = "stock_quantity")
     private Integer stockQuantity;
 
+    @Column(name = "cost_price", precision = 10, scale = 2)
+    private BigDecimal costPrice;
+
     public void updateDetails(String name, BigDecimal price, Integer stockQuantity) {
         this.name = name;
         this.price = price;
@@ -55,5 +58,15 @@ public class Product {
         }
 
         this.stockQuantity = Math.addExact(this.stockQuantity, quantity);
+    }
+
+    public void updateCostPrice(BigDecimal costPrice) {
+        if (costPrice == null || costPrice.signum() < 0) {
+            throw new IllegalArgumentException(
+                    "Cost price must be zero or greater"
+            );
+        }
+
+        this.costPrice = costPrice;
     }
 }
