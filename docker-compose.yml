@@ -41,6 +41,8 @@ services:
       MAIL_HOST: mailpit
       MAIL_PORT: "1025"
 
+      OUTBOX_ENABLED: "true"
+
     depends_on:
       - rabbitmq
       - mailpit
