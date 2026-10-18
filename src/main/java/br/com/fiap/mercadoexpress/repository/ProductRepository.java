@@ -14,4 +14,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("""
+        SELECT COALESCE(SUM(p.stockQuantity), 0)
+        FROM Product p
+        """)
+    Long sumAvailableStock();
 }
