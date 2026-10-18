@@ -68,6 +68,17 @@ public class SecurityConfig {
                                 "/api/products/**"
                         ).denyAll()
 
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/login.html",
+                                "/register.html",
+                                "/products.html",
+                                "/css/**",
+                                "/js/**",
+                                "/favicon.ico"
+                        ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .httpBasic(AbstractHttpConfigurer::disable)
