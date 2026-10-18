@@ -9,7 +9,6 @@ import br.com.fiap.mercadoexpress.entity.Order;
 import br.com.fiap.mercadoexpress.entity.OutboxEvent;
 import br.com.fiap.mercadoexpress.entity.Product;
 import br.com.fiap.mercadoexpress.entity.User;
-import br.com.fiap.mercadoexpress.event.OrderCreatedEvent;
 import br.com.fiap.mercadoexpress.repository.OrderRepository;
 import br.com.fiap.mercadoexpress.repository.OutboxEventRepository;
 import br.com.fiap.mercadoexpress.repository.ProductRepository;
@@ -17,7 +16,6 @@ import br.com.fiap.mercadoexpress.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +29,6 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    private final ApplicationEventPublisher eventPublisher;
     private final OutboxEventRepository outboxEventRepository;
 
     @Transactional
@@ -102,10 +99,6 @@ public class OrderService {
 
         outboxEventRepository.save(outboxEvent);
 
-        // Publicação antiga será substituída na próxima etapa.
-        eventPublisher.publishEvent(
-                new OrderCreatedEvent(savedOrder.getId())
-        );
 
         return toResponse(savedOrder);
     }
