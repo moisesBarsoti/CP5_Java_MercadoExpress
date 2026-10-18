@@ -20,6 +20,7 @@ public class ProductService {
         Product product = Product.builder()
                 .name(request.name())
                 .price(request.price())
+                .costPrice(request.costPrice())
                 .stockQuantity(request.stockQuantity())
                 .build();
 
@@ -45,6 +46,8 @@ public class ProductService {
                 request.price(),
                 request.stockQuantity()
         );
+
+        existingProduct.updateCostPrice(request.costPrice());
 
         Product product = productRepository.save(existingProduct);
 

@@ -4,7 +4,7 @@ const productsMessage = document.getElementById("products-message");
 const actionMessage = document.getElementById("action-message");
 
 const refreshButton = document.getElementById("refresh-products");
-const loginLink = document.getElementById("products-login-link");
+const productsLoginLink = document.getElementById("products-login-link");
 
 const addProductButton = document.getElementById("add-product-button");
 const adminSection = document.getElementById("admin-product-section");
@@ -12,12 +12,24 @@ const productForm = document.getElementById("product-form");
 const productFormTitle = document.getElementById("product-form-title");
 const cancelButton = document.getElementById("cancel-product-button");
 
+const productNameInput = document.getElementById("product-name");
+const productPriceInput = document.getElementById("product-price");
+const productCostInput = document.getElementById("product-cost-price");
+const productStockInput = document.getElementById("product-stock");
+
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+});
+
 let editingProductId = null;
 
 function getSession() {
     const token = sessionStorage.getItem("accessToken");
 
-    if (!token) return null;
+    if (!token) {
+        return null;
+    }
 
     try {
         const encodedPayload = token.split(".")[1];
@@ -39,7 +51,8 @@ function getSession() {
             token,
             role: payload.role
         };
-    } catch {
+
+    } catch (error) {
         sessionStorage.removeItem("accessToken");
         return null;
     }
@@ -60,7 +73,7 @@ function handleUnauthorized() {
 
     addProductButton.hidden = true;
     adminSection.hidden = true;
-    loginLink.hidden = false;
+    productsLoginLink.hidden = false;
 
     throw new Error("Sessão expirada. Faça login novamente.");
 }
@@ -87,11 +100,15 @@ async function apiRequest(url, options = {}) {
     }
 
     if (response.status === 403) {
-        throw new Error("Você não tem permissão para esta operação.");
+        throw new Error(
+            "Você não tem permissão para esta operação."
+        );
     }
 
     if (!response.ok) {
-        throw new Error(`Erro na operação. HTTP ${response.status}`);
+        throw new Error(
+            `Erro na operação. HTTP ${response.status}`
+        );
     }
 
     return response;
@@ -105,13 +122,11 @@ function createProductCard(product, isAdmin) {
     name.textContent = product.name;
 
     const price = document.createElement("p");
-    price.textContent = new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    }).format(product.price);
+    price.textContent = currencyFormatter.format(product.price);
 
     const stock = document.createElement("p");
-    stock.textContent = `Estoque disponível: ${product.stockQuantity}`;
+    stock.textContent =
+        `Estoque disponível: ${product.stockQuantity}`;
 
     card.append(name, price, stock);
 
@@ -151,11 +166,17 @@ async function loadProducts() {
 
     addProductButton.hidden = true;
     adminSection.hidden = true;
-    loginLink.hidden = true;
+    productsLoginLink.hidden = true;
+
+    editingProductId = null;
 
     if (!session) {
-        showMessage("Faça login para visualizar os produtos.", "#b91c1c");
-        loginLink.hidden = false;
+        showMessage(
+            "Faça login para visualizar os produtos.",
+            "#b91c1c"
+        );
+
+        productsLoginLink.hidden = false;
         return;
     }
 
@@ -167,7 +188,9 @@ async function loadProducts() {
         const products = await response.json();
 
         if (!Array.isArray(products)) {
-            throw new Error("A API retornou dados inesperados.");
+            throw new Error(
+                "A API retornou dados inesperados."
+            );
         }
 
         const isAdmin = session.role === "ADMIN";
@@ -175,14 +198,18 @@ async function loadProducts() {
         addProductButton.hidden = !isAdmin;
 
         if (products.length === 0) {
-            showMessage("Nenhum produto cadastrado no momento.");
+            showMessage(
+                "Nenhum produto cadastrado no momento."
+            );
             return;
         }
 
         const fragment = document.createDocumentFragment();
 
         products.forEach(product => {
-            fragment.appendChild(createProductCard(product, isAdmin));
+            fragment.appendChild(
+                createProductCard(product, isAdmin)
+            );
         });
 
         productsList.appendChild(fragment);
@@ -194,30 +221,84 @@ async function loadProducts() {
 
     } catch (error) {
         console.error("Erro ao carregar produtos:", error);
-        showMessage(error.message, "#b91c1c");
+
+        showMessage(
+            error.message,
+            "#b91c1c"
+        );
+
     } finally {
         refreshButton.disabled = false;
     }
 }
 
-function openProductForm(product = null) {
-    editingProductId = product ? product.id : null;
+async function openProductForm(product = null) {
+    const session = getSession();
+
+    if (!session || session.role !== "ADMIN") {
+        showActionMessage(
+            "Operação não permitida.",
+            "#b91c1c"
+        );
+        return;
+    }
+
+    editingProductId = null;
 
     productForm.reset();
+    adminSection.hidden = true;
+
     showActionMessage("");
 
     if (product) {
         productFormTitle.textContent = "Editar produto";
 
-        document.getElementById("product-name").value = product.name;
-        document.getElementById("product-price").value = product.price;
-        document.getElementById("product-stock").value = product.stockQuantity;
+        try {
+            const response = await apiRequest(
+                `/api/admin/products/${product.id}/cost`
+            );
+
+            const costData = await response.json();
+
+            if (
+                costData.costPrice === null ||
+                costData.costPrice === undefined
+            ) {
+                throw new Error(
+                    "Este produto não possui custo de aquisição cadastrado."
+                );
+            }
+
+            productNameInput.value = product.name;
+            productPriceInput.value = product.price;
+            productCostInput.value = costData.costPrice;
+            productStockInput.value = product.stockQuantity;
+
+            editingProductId = product.id;
+
+        } catch (error) {
+            console.error(
+                "Erro ao consultar custo do produto:",
+                error
+            );
+
+            showActionMessage(
+                error.message,
+                "#b91c1c"
+            );
+
+            return;
+        }
+
     } else {
         productFormTitle.textContent = "Cadastrar produto";
     }
 
     adminSection.hidden = false;
-    adminSection.scrollIntoView({ behavior: "smooth" });
+
+    adminSection.scrollIntoView({
+        behavior: "smooth"
+    });
 }
 
 async function saveProduct(event) {
@@ -226,15 +307,38 @@ async function saveProduct(event) {
     const session = getSession();
 
     if (!session || session.role !== "ADMIN") {
-        showActionMessage("Operação não permitida.", "#b91c1c");
+        showActionMessage(
+            "Operação não permitida.",
+            "#b91c1c"
+        );
         return;
     }
 
     const product = {
-        name: document.getElementById("product-name").value.trim(),
-        price: Number(document.getElementById("product-price").value),
-        stockQuantity: Number(document.getElementById("product-stock").value)
+        name: productNameInput.value.trim(),
+
+        price: Number(productPriceInput.value),
+
+        costPrice: Number(productCostInput.value),
+
+        stockQuantity: Number(productStockInput.value)
     };
+
+    if (
+        !product.name ||
+        !Number.isFinite(product.price) ||
+        product.price <= 0 ||
+        !Number.isFinite(product.costPrice) ||
+        product.costPrice < 0 ||
+        !Number.isInteger(product.stockQuantity) ||
+        product.stockQuantity < 0
+    ) {
+        showActionMessage(
+            "Verifique os dados informados.",
+            "#b91c1c"
+        );
+        return;
+    }
 
     const isEditing = editingProductId !== null;
 
@@ -261,6 +365,7 @@ async function saveProduct(event) {
 
         adminSection.hidden = true;
         editingProductId = null;
+
         productForm.reset();
 
         await loadProducts();
@@ -273,7 +378,12 @@ async function saveProduct(event) {
 
     } catch (error) {
         console.error("Erro ao salvar produto:", error);
-        showActionMessage(error.message, "#b91c1c");
+
+        showActionMessage(
+            error.message,
+            "#b91c1c"
+        );
+
     } finally {
         submitButton.disabled = false;
     }
@@ -283,7 +393,10 @@ async function deleteProduct(product) {
     const session = getSession();
 
     if (!session || session.role !== "ADMIN") {
-        showActionMessage("Operação não permitida.", "#b91c1c");
+        showActionMessage(
+            "Operação não permitida.",
+            "#b91c1c"
+        );
         return;
     }
 
@@ -291,20 +404,31 @@ async function deleteProduct(product) {
         `Deseja realmente excluir "${product.name}"?`
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+        return;
+    }
 
     try {
-        await apiRequest(`/api/products/${product.id}`, {
-            method: "DELETE"
-        });
+        await apiRequest(
+            `/api/products/${product.id}`,
+            {
+                method: "DELETE"
+            }
+        );
 
         await loadProducts();
 
-        showActionMessage("Produto excluído com sucesso!");
+        showActionMessage(
+            "Produto excluído com sucesso!"
+        );
 
     } catch (error) {
         console.error("Erro ao excluir produto:", error);
-        showActionMessage(error.message, "#b91c1c");
+
+        showActionMessage(
+            error.message,
+            "#b91c1c"
+        );
     }
 }
 
@@ -315,10 +439,13 @@ addProductButton.addEventListener("click", () => {
 cancelButton.addEventListener("click", () => {
     adminSection.hidden = true;
     editingProductId = null;
+
     productForm.reset();
+    showActionMessage("");
 });
 
 productForm.addEventListener("submit", saveProduct);
+
 refreshButton.addEventListener("click", loadProducts);
 
 loadProducts();
