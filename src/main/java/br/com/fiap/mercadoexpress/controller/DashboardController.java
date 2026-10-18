@@ -6,6 +6,7 @@ import br.com.fiap.mercadoexpress.service.DashboardService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import br.com.fiap.mercadoexpress.dto.response.DashboardChartsResponse;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,5 +19,10 @@ public class DashboardController {
     @GetMapping
     public DashboardSummaryResponse getSummary() {
         return dashboardService.getSummary();
+    }
+
+    @GetMapping("/charts")
+    public DashboardChartsResponse getCharts() {
+        return dashboardService.getCharts();
     }
 }
