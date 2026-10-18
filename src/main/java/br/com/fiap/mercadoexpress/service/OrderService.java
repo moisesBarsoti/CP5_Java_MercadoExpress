@@ -14,6 +14,8 @@ import br.com.fiap.mercadoexpress.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import br.com.fiap.mercadoexpress.event.OrderCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -25,6 +27,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request, String email) {
@@ -76,6 +79,10 @@ public class OrderService {
         }
 
         Order savedOrder = orderRepository.saveAndFlush(order);
+
+        eventPublisher.publishEvent(
+                new OrderCreatedEvent(savedOrder.getId())
+        );
 
         return toResponse(savedOrder);
     }
