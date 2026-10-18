@@ -80,4 +80,20 @@ public class Order {
 
         totalAmount = totalAmount.add(item.getSubtotal());
     }
+
+    public void markAsPaid() {
+        if (status != OrderStatus.PENDING_PAYMENT) {
+            throw new IllegalStateException("Order is not pending payment");
+        }
+
+        this.status = OrderStatus.PAID;
+    }
+
+    public void markAsPaymentFailed() {
+        if (status != OrderStatus.PENDING_PAYMENT) {
+            throw new IllegalStateException("Order is not pending payment");
+        }
+
+        this.status = OrderStatus.PAYMENT_FAILED;
+    }
 }
