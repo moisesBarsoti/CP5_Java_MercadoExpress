@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Produtos - MercadoExpress</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/products.js?v=2" defer></script>
+</head>
+<body>
+
+<header>
+    <h1>MercadoExpress</h1>
+
+    <nav>
+        <a href="/index.html">Início</a>
+        <a href="/products.html">Produtos</a>
+        <a href="/login.html">Entrar</a>
+        <a href="/register.html">Cadastrar</a>
+    </nav>
+</header>
+
+<main class="products-container">
+
+    <h2>Catálogo de produtos</h2>
+
+    <p id="products-message" role="status" aria-live="polite">
+        Carregando produtos...
+    </p>
+
+    <div id="products-list" class="products-grid"></div>
+
+    <button
+            id="refresh-products"
+            type="button"
+            class="button"
+            style="border: none; cursor: pointer; margin-top: 24px;"
+    >
+        Atualizar catálogo
+    </button>
+
+    <p style="margin-top: 20px;">
+        <a id="products-login-link" href="/login.html" hidden>
+            Fazer login
+        </a>
+    </p>
+
+</main>
+
+<footer>
+    <p>MercadoExpress © 2026</p>
+</footer>
+
+</body>
+</html>
