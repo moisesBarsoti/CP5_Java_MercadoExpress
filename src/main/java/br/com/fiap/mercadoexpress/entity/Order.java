@@ -59,4 +59,25 @@ public class Order {
     )
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
+
+    public void addItem(Product product, int quantity) {
+        if (product == null) {
+            throw new IllegalArgumentException("Product is required");
+        }
+
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+
+        OrderItem item = OrderItem.builder()
+                .order(this)
+                .product(product)
+                .quantity(quantity)
+                .unitPrice(product.getPrice())
+                .build();
+
+        items.add(item);
+
+        totalAmount = totalAmount.add(item.getSubtotal());
+    }
 }
