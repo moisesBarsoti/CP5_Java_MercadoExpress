@@ -1,4 +1,12 @@
+
 package br.com.fiap.mercadoexpress.dto.response;
 
-public class DashboardProfitResponse {
-}
+import java.math.BigDecimal;
+import java.util.List;
+
+public record DashboardProfitResponse(
+        BigDecimal recordedGrossProfit,
+        long fullyCostedOrders,
+        long ordersMissingCost,
+        List<DailyProfitResponse> profitByDay
+) {}
