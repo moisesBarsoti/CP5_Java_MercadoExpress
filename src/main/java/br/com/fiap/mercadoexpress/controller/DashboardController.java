@@ -1,6 +1,7 @@
 
 package br.com.fiap.mercadoexpress.controller;
 
+import br.com.fiap.mercadoexpress.dto.response.DashboardProfitResponse;
 import br.com.fiap.mercadoexpress.dto.response.DashboardSummaryResponse;
 import br.com.fiap.mercadoexpress.service.DashboardService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -24,5 +25,10 @@ public class DashboardController {
     @GetMapping("/charts")
     public DashboardChartsResponse getCharts() {
         return dashboardService.getCharts();
+    }
+
+    @GetMapping("/profit")
+    public DashboardProfitResponse getProfitReport() {
+        return dashboardService.getProfitReport();
     }
 }
