@@ -33,10 +33,28 @@ public class RabbitMQConfig {
     public static final String PAYMENT_REJECTED_ROUTING_KEY =
             "payment.rejected";
 
+    public static final String PAYMENT_DEAD_LETTER_EXCHANGE =
+            "mercadoexpress.payment.dlx";
+
+    public static final String PAYMENT_DEAD_LETTER_QUEUE =
+            "mercadoexpress.payment.dlq";
+
+    public static final String PAYMENT_DEAD_LETTER_ROUTING_KEY =
+            "payment.failed";
+
     @Bean
     public DirectExchange paymentExchange() {
         return new DirectExchange(
                 PAYMENT_EXCHANGE,
+                true,
+                false
+        );
+    }
+
+    @Bean
+    public DirectExchange paymentDeadLetterExchange() {
+        return new DirectExchange(
+                PAYMENT_DEAD_LETTER_EXCHANGE,
                 true,
                 false
         );
@@ -58,9 +76,14 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue paymentDeadLetterQueue() {
+        return new Queue(PAYMENT_DEAD_LETTER_QUEUE, true);
+    }
+
+    @Bean
     public Binding paymentBinding(
             @Qualifier("paymentQueue") Queue queue,
-            DirectExchange exchange
+            @Qualifier("paymentExchange") DirectExchange exchange
     ) {
         return BindingBuilder
                 .bind(queue)
@@ -71,7 +94,7 @@ public class RabbitMQConfig {
     @Bean
     public Binding paymentApprovedBinding(
             @Qualifier("paymentApprovedQueue") Queue queue,
-            DirectExchange exchange
+            @Qualifier("paymentExchange") DirectExchange exchange
     ) {
         return BindingBuilder
                 .bind(queue)
@@ -82,11 +105,22 @@ public class RabbitMQConfig {
     @Bean
     public Binding paymentRejectedBinding(
             @Qualifier("paymentRejectedQueue") Queue queue,
-            DirectExchange exchange
+            @Qualifier("paymentExchange") DirectExchange exchange
     ) {
         return BindingBuilder
                 .bind(queue)
                 .to(exchange)
                 .with(PAYMENT_REJECTED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding paymentDeadLetterBinding(
+            @Qualifier("paymentDeadLetterQueue") Queue queue,
+            @Qualifier("paymentDeadLetterExchange") DirectExchange exchange
+    ) {
+        return BindingBuilder
+                .bind(queue)
+                .to(exchange)
+                .with(PAYMENT_DEAD_LETTER_ROUTING_KEY);
     }
 }
