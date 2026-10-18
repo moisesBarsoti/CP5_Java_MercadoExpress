@@ -1,0 +1,8 @@
+.git
+.idea
+.env
+*.iml
+.DS_Store
+target/*.jar.original
+target/surefire-reports
+target/test-classes
