@@ -69,11 +69,18 @@ public class Order {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
 
+        if (product.getCostPrice() == null) {
+            throw new IllegalStateException(
+                    "Product cost price is not configured"
+            );
+        }
+
         OrderItem item = OrderItem.builder()
                 .order(this)
                 .product(product)
                 .quantity(quantity)
                 .unitPrice(product.getPrice())
+                .unitCost(product.getCostPrice())
                 .build();
 
         items.add(item);
