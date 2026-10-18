@@ -31,4 +31,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     BigDecimal sumTotalByStatus(
             @Param("status") OrderStatus status
     );
+
+    List<Order> findAllByStatus(OrderStatus status);
 }
