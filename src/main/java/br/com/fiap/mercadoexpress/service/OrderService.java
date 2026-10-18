@@ -6,16 +6,20 @@ import br.com.fiap.mercadoexpress.dto.request.OrderRequest;
 import br.com.fiap.mercadoexpress.dto.response.OrderItemResponse;
 import br.com.fiap.mercadoexpress.dto.response.OrderResponse;
 import br.com.fiap.mercadoexpress.entity.Order;
+import br.com.fiap.mercadoexpress.entity.OutboxEvent;
 import br.com.fiap.mercadoexpress.entity.Product;
 import br.com.fiap.mercadoexpress.entity.User;
+import br.com.fiap.mercadoexpress.event.OrderCreatedEvent;
 import br.com.fiap.mercadoexpress.repository.OrderRepository;
+import br.com.fiap.mercadoexpress.repository.OutboxEventRepository;
 import br.com.fiap.mercadoexpress.repository.ProductRepository;
 import br.com.fiap.mercadoexpress.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import br.com.fiap.mercadoexpress.event.OrderCreatedEvent;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -28,29 +32,39 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventRepository outboxEventRepository;
 
     @Transactional
-    public OrderResponse createOrder(OrderRequest request, String email) {
+    public OrderResponse createOrder(
+            OrderRequest request,
+            String email
+    ) {
 
         User customer = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new IllegalArgumentException("User not found")
                 );
 
-        if (request == null || request.items() == null
+        if (request == null
+                || request.items() == null
                 || request.items().isEmpty()) {
-            throw new IllegalArgumentException("Order must contain items");
+            throw new IllegalArgumentException(
+                    "Order must contain items"
+            );
         }
 
         Map<Long, Integer> quantities = new TreeMap<>();
 
         for (OrderItemRequest item : request.items()) {
 
-            if (item == null || item.productId() == null
+            if (item == null
+                    || item.productId() == null
                     || item.productId() <= 0
                     || item.quantity() == null
                     || item.quantity() <= 0) {
-                throw new IllegalArgumentException("Invalid order item");
+                throw new IllegalArgumentException(
+                        "Invalid order item"
+                );
             }
 
             quantities.merge(
@@ -64,12 +78,15 @@ public class OrderService {
                 .customer(customer)
                 .build();
 
-        for (Map.Entry<Long, Integer> entry : quantities.entrySet()) {
+        for (Map.Entry<Long, Integer> entry :
+                quantities.entrySet()) {
 
             Product product = productRepository
                     .findByIdForUpdate(entry.getKey())
                     .orElseThrow(() ->
-                            new IllegalArgumentException("Product not found")
+                            new IllegalArgumentException(
+                                    "Product not found"
+                            )
                     );
 
             int quantity = entry.getValue();
@@ -80,6 +97,12 @@ public class OrderService {
 
         Order savedOrder = orderRepository.saveAndFlush(order);
 
+        OutboxEvent outboxEvent =
+                OutboxEvent.paymentRequested(savedOrder.getId());
+
+        outboxEventRepository.save(outboxEvent);
+
+        // Publicação antiga será substituída na próxima etapa.
         eventPublisher.publishEvent(
                 new OrderCreatedEvent(savedOrder.getId())
         );
