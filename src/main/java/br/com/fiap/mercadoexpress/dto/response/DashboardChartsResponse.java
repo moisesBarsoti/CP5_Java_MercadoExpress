@@ -1,4 +1,9 @@
+
 package br.com.fiap.mercadoexpress.dto.response;
 
-public class DashboardChartsResponse {
-}
+import java.util.List;
+
+public record DashboardChartsResponse(
+    List<DailySalesResponse> salesByDay,
+    List<ProductStockResponse> stockByProduct
+) {}
