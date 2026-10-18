@@ -13,20 +13,26 @@
             src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"
             defer>
     </script>
-    <script src="/js/dashboard.js" defer></script>
+
+    <script src="/js/dashboard.js?v=5" defer></script>
 </head>
 <body>
 
 <header class="header">
-    <div class="brand">Mercado<span>Express</span></div>
+    <div class="brand">
+        Mercado<span>Express</span>
+    </div>
 
     <nav>
         <a href="/index.html">Início</a>
         <a href="/products.html">Produtos</a>
-        <button id="logoutButton">Sair</button>
-        <a href="/dashboard.html" id="dashboardLink" hidden>
-            Dashboard
-        </a>
+        <a href="/dashboard.html" aria-current="page">Dashboard</a>
+
+        <button
+                id="logoutButton"
+                type="button">
+            Sair
+        </button>
     </nav>
 </header>
 
@@ -36,19 +42,28 @@
         <div>
             <p class="eyebrow">ÁREA ADMINISTRATIVA</p>
             <h1>Dashboard Gerencial</h1>
-            <p>Acompanhe vendas, pedidos e estoque.</p>
+            <p>Acompanhe vendas, pedidos, lucros e estoque.</p>
         </div>
     </div>
 
-    <p id="errorMessage" class="error" hidden></p>
+    <p id="errorMessage" class="error" role="alert" hidden></p>
 
     <section id="dashboardContent" hidden>
 
         <div class="metrics">
+
             <article class="metric-card">
                 <h2>Faturamento</h2>
                 <strong id="totalRevenue">--</strong>
-                <span>Pedidos pagos</span>
+                <span>Receita de pedidos pagos</span>
+            </article>
+
+            <article class="metric-card">
+                <h2>Lucro bruto registrado</h2>
+                <strong id="recordedGrossProfit">--</strong>
+                <span id="profitCoverage">
+                    Aguardando dados...
+                </span>
             </article>
 
             <article class="metric-card">
@@ -68,11 +83,25 @@
                 <strong id="availableStock">--</strong>
                 <span>Unidades disponíveis</span>
             </article>
+
         </div>
 
+        <p
+                id="profitWarning"
+                class="profit-warning"
+                role="status"
+                hidden>
+        </p>
+
         <div class="charts">
+
             <article class="chart-card">
                 <h2>Vendas por dia</h2>
+
+                <p class="chart-description">
+                    Faturamento dos pedidos com pagamento aprovado.
+                </p>
+
                 <div class="chart-container">
                     <canvas id="salesChart"></canvas>
                 </div>
@@ -80,6 +109,11 @@
 
             <article class="chart-card">
                 <h2>Situação dos pedidos</h2>
+
+                <p class="chart-description">
+                    Distribuição dos pedidos por status.
+                </p>
+
                 <div class="chart-container">
                     <canvas id="ordersChart"></canvas>
                 </div>
@@ -87,14 +121,34 @@
 
             <article class="chart-card full-width">
                 <h2>Estoque por produto</h2>
+
+                <p class="chart-description">
+                    Quantidade disponível de cada produto cadastrado.
+                </p>
+
                 <div class="chart-container">
                     <canvas id="stockChart"></canvas>
                 </div>
             </article>
+
+            <article class="chart-card full-width">
+                <h2>Lucro bruto registrado por dia</h2>
+
+                <p class="chart-description">
+                    Lucro calculado a partir dos custos históricos
+                    disponíveis nas vendas confirmadas.
+                </p>
+
+                <div class="chart-container">
+                    <canvas id="profitChart"></canvas>
+                </div>
+            </article>
+
         </div>
 
     </section>
 
 </main>
+
 </body>
 </html>
