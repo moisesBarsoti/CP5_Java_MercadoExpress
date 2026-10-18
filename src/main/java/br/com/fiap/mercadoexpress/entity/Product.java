@@ -34,4 +34,16 @@ public class Product {
         this.price = price;
         this.stockQuantity = stockQuantity;
     }
+
+    public void decreaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+
+        if (stockQuantity < quantity) {
+            throw new IllegalStateException("Insufficient stock");
+        }
+
+        this.stockQuantity -= quantity;
+    }
 }
