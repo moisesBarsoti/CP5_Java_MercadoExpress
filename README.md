@@ -4,6 +4,18 @@ API de comercio eletronico desenvolvida em **Java 21** e **Spring Boot 4.1.1**, 
 
 O processamento bancario e simulado por outra aplicacao, **BancoTranquilo**, executada separadamente. O MercadoExpress utiliza **Transactional Outbox** para persistir as solicitacoes de pagamento junto com os pedidos antes de publica-las no RabbitMQ.
 
+## Acesso e repositórios
+
+| Recurso | Endereço |
+| --- | --- |
+| **MercadoExpress publicado** | [Acessar aplicação no Render](https://mercadoexpress-cp5.onrender.com/) |
+| **Swagger UI publicado** | [Documentação interativa](https://mercadoexpress-cp5.onrender.com/swagger-ui.html) |
+| **OpenAPI JSON** | [Especificação da API](https://mercadoexpress-cp5.onrender.com/v3/api-docs) |
+| **Repositório MercadoExpress** | [GitHub](https://github.com/moisesBarsoti/CP5_Java_MercadoExpress) |
+| **Microsserviço BancoTranquilo** | [GitHub](https://github.com/moisesBarsoti/CP5_BancoTranquilo_Java) |
+
+> **Diferença entre ambientes:** o deploy público no Render disponibiliza a interface, a autenticação, o CRUD administrativo e o PostgreSQL na nuvem. A integração completa de pagamentos com RabbitMQ, BancoTranquilo, Transactional Outbox e Mailpit foi demonstrada no **ambiente local**. No Render, o processamento assíncrono foi desabilitado (`OUTBOX_ENABLED=false` e inicialização automática dos listeners desativada), pois esses serviços externos não foram publicados junto com a aplicação. Portanto, compras feitas na versão online não devem ser apresentadas como pagamentos processados.
+
 ## Tecnologias
 
 - Java 21, Spring Boot 4.1.1 e Maven Wrapper (`./mvnw`)
@@ -13,6 +25,72 @@ O processamento bancario e simulado por outra aplicacao, **BancoTranquilo**, exe
 - Docker e Docker Compose
 - Mailpit para visualizar emails em ambiente de desenvolvimento
 - JUnit 5 e Mockito para testes automatizados
+
+## Demonstração da aplicação — Render
+
+As capturas desta seção foram feitas na aplicação publicada. A autenticação utiliza JWT e o perfil do usuário controla as ações disponíveis no catálogo.
+
+### Página inicial
+
+Tela de entrada da aplicação, com navegação para o catálogo de produtos.
+
+![Página inicial do MercadoExpress publicada no Render](docs/images/01-home.png)
+
+### Cadastro de usuários
+
+Formulário para criação de contas. Novos cadastros recebem o perfil `CUSTOMER`.
+
+![Formulário de cadastro de usuário](docs/images/02-cadastro.png)
+
+### Login
+
+Formulário de autenticação de usuários por e-mail e senha. A aplicação utiliza JWT para as requisições autenticadas.
+
+![Formulário de login do MercadoExpress](docs/images/03-login.png)
+
+### Catálogo de produtos
+
+Consulta ao catálogo com preço e disponibilidade de estoque. As ações exibidas variam conforme o perfil autenticado.
+
+![Catálogo de produtos do MercadoExpress](docs/images/04-produtos.png)
+
+### Cadastro de produtos — CREATE
+
+Formulário administrativo de inclusão de produtos, com nome, preço de venda, custo de aquisição e estoque.
+
+![Formulário para criar um produto](docs/images/05-criar-produto.png)
+
+### Edição de produtos — UPDATE
+
+Formulário administrativo para alterar as informações de um produto existente.
+
+![Formulário de edição de produto](docs/images/06-editar-produto.png)
+
+> As operações de consulta, cadastro, atualização e exclusão são protegidas no backend conforme as permissões do usuário. A imagem de edição mostra o **formulário**, não o resultado de um teste automatizado.
+
+### Dashboard administrativo
+
+Visão geral com indicadores, gráficos de vendas e situação dos pedidos. Os valores exibidos nesta captura pertencem ao banco de dados do **Render**, que é separado do banco usado nos testes locais de pagamento.
+
+![Dashboard administrativo do MercadoExpress](docs/images/07-dashboard.png)
+
+### Swagger / OpenAPI
+
+Documentação interativa das rotas REST, incluindo controladores de produtos, pedidos e autenticação.
+
+![Swagger UI do MercadoExpress](docs/images/08-swagger.png)
+
+### Publicação no Render
+
+Registro do serviço web publicado utilizando Docker. A URL da aplicação está na seção [Acesso e repositórios](#acesso-e-repositórios).
+
+![Deploy do MercadoExpress no Render](docs/images/09-render.png)
+
+### Spring Initializr
+
+Captura de uma **configuração equivalente reconstruída** com base no `pom.xml` do MercadoExpress (Maven, Java 21, Spring Boot 4.1.1 e dependências principais). Não se trata de um registro histórico da primeira geração do projeto; algumas bibliotecas adicionais, como o Springdoc OpenAPI, são declaradas diretamente no Maven.
+
+![Configuração equivalente no Spring Initializr](docs/images/10-spring-initializr.png)
 
 ## Arquitetura e fluxo de pagamento
 
@@ -194,6 +272,36 @@ set +a
 - Pedido #9: criado durante indisponibilidade do RabbitMQ; evento permaneceu `PENDING`. Apos a retomada do broker, foi para `PUBLISHED` e o pedido terminou `PAID`, com uma falha de publicacao registrada em `attempts`
 
 O envio pelo Mailpit e uma simulacao de SMTP: o recebimento na caixa do Mailpit nao comprova entrega em uma caixa de email externa.
+
+## Evidências da integração local
+
+As evidências abaixo foram coletadas no ambiente de desenvolvimento, com PostgreSQL, RabbitMQ, BancoTranquilo e Mailpit disponíveis. Elas se referem ao fluxo de pagamentos **local**, não ao serviço público do Render.
+
+### RabbitMQ — visão geral do broker
+
+Painel de gerenciamento do RabbitMQ 4.3.6, com conexões, canais, exchanges, filas e consumidores em execução. A captura mostra a aba **Overview**, não o conteúdo individual de cada fila.
+
+![Visão geral do RabbitMQ Management](docs/images/11-rabbitmq-exchanges.png)
+
+As filas configuradas no projeto são `mercadoexpress.payment.queue`, `mercadoexpress.payment.approved.queue`, `mercadoexpress.payment.rejected.queue` e `mercadoexpress.payment.dlq`. Para visualizá-las individualmente, use a aba **Queues and Streams** do painel local (`http://127.0.0.1:15672`).
+
+### PostgreSQL — Transactional Outbox
+
+Consulta realizada na tabela `outbox_events`. Os eventos associados aos pedidos **8 e 9** aparecem como `PUBLISHED`. O evento do pedido 9 apresenta uma tentativa de publicação com falha registrada antes de sua confirmação.
+
+![Consulta dos eventos da Transactional Outbox no PostgreSQL](docs/images/12-outbox.png)
+
+### Mailpit — notificações de pagamento
+
+Caixa de entrada do Mailpit, exibindo mensagens *Payment Confirmation* referentes a pedidos aprovados pelo simulador bancário. O Mailpit captura e-mails em ambiente local; esta evidência **não equivale a entrega real por um provedor externo**.
+
+![Caixa de entrada do Mailpit com notificações de pagamento](docs/images/13-email.png)
+
+### PostgreSQL — pedidos pagos
+
+Consulta à tabela `orders` filtrada pelo status `PAID`, mostrando o resultado do processamento de pagamentos no ambiente local.
+
+![Consulta ao PostgreSQL mostrando pedidos com status PAID](docs/images/14-pagamento.png)
 
 ## Observacoes de ambiente
 
